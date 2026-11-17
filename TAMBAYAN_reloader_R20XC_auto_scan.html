@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAMBAYAN · Reloader Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* TAMBAYAN — Reloader Terminal
+     Shares the exact token system, typography and component styling of admin.css.
+     Self-contained: reloader.html does not need admin.css loaded. */
+
+  :root {
+    --bg: #12161A;
+    --surface: #1B2127;
+    --surface-raised: #232A31;
+    --border: #2C343C;
+    --text: #EDEEF0;
+    --text-muted: #8A94A0;
+    --amber: #E8A33D;
+    --amber-dim: rgba(232, 163, 61, 0.15);
+    --green: #3ED9A4;
+    --green-dim: rgba(62, 217, 164, 0.15);
+    --red: #FF6B6B;
+    --red-dim: rgba(255, 107, 107, 0.15);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .display { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ---------- Login ---------- */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .brand-mark {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--amber);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+  }
+  .brand-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+  }
+  .brand-sub { color: var(--text-muted); font-size: 12px; margin-top: -2px; }
+
+  label { font-size: 12px; color: var(--text-muted); display: block; margin: 14px 0 6px; }
+  input {
+    width: 100%;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus { outline: 2px solid var(--amber); outline-offset: 1px; border-color: var(--amber); }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  button[disabled] { opacity: 0.55; cursor: not-allowed; }
+  .btn-primary {
+    width: 100%;
+    background: var(--amber);
+    color: #1A1204;
+    padding: 12px;
+    margin-top: 20px;
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-secondary {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+  }
+  .btn-secondary:hover { border-color: var(--amber); }
+
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* ---------- Terminal shell ---------- */
+  #terminal { display: none; max-width: 880px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  header.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  /* Live operating wallet badge */
+  .wallet-badge {
+    background: var(--amber-dim);
+    border: 1px solid rgba(232, 163, 61, 0.35);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    text-align: right;
+    min-width: 150px;
+  }
+  .wallet-label { color: var(--amber); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+  .wallet-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--amber);
+    line-height: 1.25;
+    transition: color 0.3s ease;
+  }
+  .wallet-badge.empty { background: var(--red-dim); border-color: rgba(255, 107, 107, 0.35); }
+  .wallet-badge.empty .wallet-label,
+  .wallet-badge.empty .wallet-value { color: var(--red); }
+
+  /* Who is signed in at this booth */
+  .term-identity {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+
+  .search-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .search-row input { flex: 1; }
+  .search-row button { padding: 0 20px; background: var(--surface-raised); color: var(--text); border: 1px solid var(--border); }
+  .search-row button:hover { border-color: var(--amber); }
+  .search-hint { color: var(--text-muted); font-size: 12px; margin: 8px 0 28px; }
+
+  .status-msg { padding: 14px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: none; }
+  .status-msg.show { display: block; }
+  .status-msg.info { background: var(--amber-dim); color: var(--amber); }
+  .status-msg.error { background: var(--red-dim); color: var(--red); }
+  .status-msg.success { background: var(--green-dim); color: var(--green); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .card.show { display: block; }
+
+  .user-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+  .user-name { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600; }
+  .user-meta { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  .uid-tag { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); background: var(--surface-raised); padding: 3px 8px; border-radius: 5px; }
+
+  .status-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .status-pill.active { background: var(--green-dim); color: var(--green); }
+  .status-pill.blocked { background: var(--red-dim); color: var(--red); }
+
+  /* Battery-gauge balance display */
+  .balance-block { margin: 20px 0; }
+  .balance-label { color: var(--text-muted); font-size: 12px; margin-bottom: 6px; }
+  .balance-value { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; color: var(--amber); }
+  .gauge { height: 8px; background: var(--surface-raised); border-radius: 4px; margin-top: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .gauge-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--green)); border-radius: 4px; transition: width 0.6s ease; }
+
+  .reload-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .reload-row input { flex: 1; min-width: 140px; }
+  .reload-row button { background: var(--amber); color: #1A1204; padding: 0 22px; }
+  .reload-row button:hover { filter: brightness(1.08); }
+  .quick-amounts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quick-amounts button { background: var(--surface-raised); color: var(--text-muted); border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .quick-amounts button:hover { border-color: var(--amber); color: var(--amber); }
+  .quick-amounts button.clear { margin-left: auto; }
+
+  .transfer-row { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .transfer-row .btn-primary { margin-top: 0; }
+
+  .tx-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+  td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; vertical-align: middle; }
+  td.prose { font-family: 'Inter', sans-serif; }
+  .tx-amount.reload { color: var(--green); }
+  .tx-amount.charge { color: var(--red); }
+  .empty-tx { color: var(--text-muted); font-size: 13px; padding: 12px 0; display: none; }
+  .table-scroll { overflow-x: auto; }
+
+  /* ---------- Terminal history log ---------- */
+  .log-scroll { max-height: 320px; overflow-y: auto; overflow-x: auto; }
+  .log-scroll th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .log-foot { color: var(--text-muted); font-size: 11px; margin-top: 14px; line-height: 1.6; }
+  .log-foot b { color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 12px; flex-wrap: wrap; }
+
+  /* ---------- Modals ---------- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(9, 11, 13, 0.7);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px;
+  }
+  .modal-box p { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin: 4px 0 0; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+  .modal-actions .btn-primary,
+  .modal-actions .btn-secondary,
+  .modal-actions .btn-reject { width: auto; margin-top: 0; padding: 11px 18px; }
+
+  .btn-reject { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); padding: 8px 14px; font-size: 12px; }
+  .btn-reject:hover { background: var(--red); color: #fff; }
+
+  /* Confirmation receipt rows inside the transfer modal */
+  .confirm-rows { margin-top: 16px; }
+  .confirm-row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-row span { color: var(--text-muted); }
+  .confirm-row b { font-weight: 600; text-align: right; }
+  .confirm-row b.amount { color: var(--amber); font-size: 16px; }
+
+  /* ---------- Small screens (booth tablets / phones) ---------- */
+  @media (max-width: 560px) {
+    header.topbar { align-items: flex-start; }
+    .wallet-badge { flex: 1; text-align: left; }
+    .search-row { flex-direction: column; }
+    .search-row button { padding: 12px; }
+    .reload-row button { padding: 12px; width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+</style>
+<style>
+/* Additional profile + branch sales styles */
+.reloader-tabs{display:flex;gap:8px;overflow-x:auto;border-bottom:1px solid var(--border);margin:0 0 22px;padding-bottom:2px}
+.reloader-tab{flex-shrink:0;padding:12px 15px;background:transparent;color:var(--text-muted);border-radius:8px 8px 0 0;border-bottom:2px solid transparent}
+.reloader-tab.active{color:var(--amber);border-bottom-color:var(--amber);background:var(--amber-dim)}
+.reloader-pane{display:none}.reloader-pane.active{display:block}
+.reloader-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+.reloader-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0}
+.reloader-actions button{padding:10px 14px}.reloader-actions .btn-primary{width:auto;margin:0}
+.reloader-muted{color:var(--text-muted);font-size:12px;line-height:1.55}.reloader-note{background:var(--amber-dim);border:1px solid rgba(232,163,61,.25);border-radius:8px;padding:12px;color:var(--text);font-size:12px;line-height:1.5;margin:12px 0}
+.reloader-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.reloader-kpi{padding:17px;background:var(--surface-raised);border:1px solid var(--border);border-radius:8px}.reloader-kpi span{display:block;color:var(--text-muted);font-size:12px;margin-bottom:10px}.reloader-kpi strong{font-size:22px;font-family:'JetBrains Mono',monospace}
+.reloader-filter-row{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.reloader-filter-row>div{flex:1 1 160px}.reloader-filter-row select{width:100%;min-height:42px;background:var(--surface-raised);color:var(--text);padding:9px;border:1px solid var(--border);border-radius:8px}
+.reloader-bars{display:flex;gap:9px;align-items:flex-end;min-height:164px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--border)}.reloader-bars-item{flex:1 0 32px;min-width:32px;text-align:center;font-size:11px;color:var(--text-muted)}.reloader-bars-amount{font-size:10px}.reloader-bars-column{height:110px;display:flex;align-items:flex-end;justify-content:center}.reloader-bars-fill{min-height:2px;width:27px;background:var(--green);border-radius:4px 4px 0 0}.reloader-report-table{overflow:auto;max-height:420px;margin:12px 0 23px}.reloader-report-table th{position:sticky;top:0;background:var(--surface)}.reloader-report-table td,.reloader-report-table th{padding:10px 12px;white-space:nowrap}
+.reloader-loading{display:none}.reloader-loading.show{display:block;color:var(--amber)}
+@media(max-width:630px){.reloader-form-grid{grid-template-columns:1fr}.reloader-kpis{grid-template-columns:1fr}.reloader-kpi strong{font-size:20px}}
+
+</style>
+</head>
+<body>
+
+<!--  LOGIN  -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div>
+        <div class="brand-name">TAMBAYAN</div>
+        <div class="brand-sub">Reloader Terminal</div>
+      </div>
+    </div>
+    <label for="loginEmail">Reloader email</label>
+    <input type="email" id="loginEmail" placeholder="booth@tambay.ph" autocomplete="username">
+    <label for="loginPass">Password</label>
+    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign in</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ============ TERMINAL ============ -->
+<div id="terminal">
+  <header class="topbar">
+    <div class="brand" style="margin-bottom:0;">
+      <div class="brand-mark">T</div>
+      <div>
+        <div class="brand-name">TAMBAYAN</div>
+        <div class="brand-sub">Reloader Terminal</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="wallet-badge" id="walletBadge">
+        <div class="wallet-label">Operating wallet</div>
+        <div class="wallet-value">₱<span id="walletValue">0.00</span></div>
+      </div>
+      <button class="btn-secondary" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="term-identity">
+    <div>
+      <div class="user-name" id="reloaderName">—</div>
+      <div class="user-meta">
+        Store ID <span class="uid-tag" id="reloaderUidTag">—</span> · <span id="reloaderEmail">—</span>
+        <div class="reloader-muted" style="margin-top:6px">Assigned branch: <strong id="operatorBranchUid">—</strong></div>
+      </div>
+    </div>
+    <span class="status-pill active" id="reloaderStatus">Active</span>
+  </div>
+
+  <nav class="reloader-tabs" aria-label="Reloader navigation">
+    <button class="reloader-tab active" id="rtab-operate" onclick="showReloaderPane('operate')" type="button">Reload Terminal</button>
+    <button class="reloader-tab" id="rtab-reports" onclick="showReloaderPane('reports')" type="button">Sales Reports</button>
+    <button class="reloader-tab" id="rtab-profile" onclick="showReloaderPane('profile')" type="button">My Profile</button>
+  </nav>
+  <section class="reloader-pane active" id="rpane-operate">
+  <!--  SCAN / FETCH CUSTOMER CARD  -->
+  <div class="search-row">
+    <input type="text" id="cardInput" class="mono" placeholder="Tap RFID card or enter customer UID" style="text-transform:uppercase;" autocomplete="off" spellcheck="false" aria-label="RFID card UID">
+    <button onclick="fetchCard()">Search</button>
+  </div>
+  <div class="search-hint">Tap a card on the 13.56 MHz R20XC-USB reader to search automatically, even when the reload amount field is selected. You can also type an existing hexadecimal UID and press Search. Scanning is active only on this tab while signed in.</div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <!--  CUSTOMER CARD + RELOAD FORM  -->
+  <div class="card" id="customerCard">
+    <div class="user-head">
+      <div>
+        <div class="user-name" id="custName">—</div>
+        <div class="user-meta"><span class="uid-tag" id="custUid">—</span> · <span id="custPhone">—</span></div>
+      </div>
+      <span class="status-pill active" id="custStatus">Active</span>
+    </div>
+
+    <div class="balance-block">
+      <div class="balance-label">Current card balance</div>
+      <div class="balance-value">₱<span id="custBalance">0.00</span></div>
+      <div class="gauge"><div class="gauge-fill" id="custGauge" style="width: 0%"></div></div>
+    </div>
+
+    <div class="reload-row">
+      <input type="number" id="reloadAmount" placeholder="Reload amount (₱)" min="0" step="1" inputmode="decimal">
+    </div>
+    <div class="quick-amounts">
+      <button onclick="addQuickAmount(20)">+₱20</button>
+      <button onclick="addQuickAmount(50)">+₱50</button>
+      <button onclick="addQuickAmount(100)">+₱100</button>
+      <button onclick="addQuickAmount(200)">+₱200</button>
+      <button class="clear" onclick="clearAmount()">Clear</button>
+    </div>
+
+    <div class="transfer-row">
+      <button class="btn-primary" id="transferBtn" onclick="openConfirmModal()">Confirm &amp; transfer funds</button>
+    </div>
+  </div>
+
+  <!--  TERMINAL HISTORY LOG  -->
+  <div class="card show" id="logCard">
+    <div class="section-head">
+      <div class="tx-title" style="margin-bottom:0;">Reloads from this terminal</div>
+    </div>
+    <div class="table-scroll log-scroll">
+      <table>
+        <thead>
+          <tr><th>When</th><th>Card UID</th><th>Loaded</th><th>Wallet after</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-tx" id="logEmpty">No reloads yet. Fetch a customer card above to make the first one.</div>
+    <div class="log-foot" id="logFoot"></div>
+  </div>
+  </section>
+
+  <!-- Read-only branch reports. All branch scoping happens in Firebase rules, NOT browser filters. -->
+  <section class="reloader-pane" id="rpane-reports">
+    <div class="card show">
+      <div class="section-head"><div>
+        <div class="user-name">Branch Sales Reports</div>
+        <div class="reloader-muted">Sales made by all authorized reloader accounts at your assigned physical branch.</div>
+      </div></div>
+      <p class="reloader-muted">Reporting branch: <strong id="reportBranchLabel">—</strong></p>
+      <div class="reloader-note">Only top-up collections are included, not charging revenue or operating wallet float. Historical top-ups without verified branch tags are not automatically attributed. Branch reports require the accompanying Firebase Rules addition.</div>
+      <div class="reloader-filter-row">
+        <div><label for="operatorReportPeriod">Reporting period</label><select id="operatorReportPeriod" onchange="renderOperatorReport()"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" selected>Monthly</option><option value="yearly">Yearly</option></select></div>
+        <div id="operatorReportDateWrap"><label for="operatorReportDate">Reference date (PHT)</label><input type="date" id="operatorReportDate" onchange="operatorDateChanged()"></div>
+        <div id="operatorReportMonthWrap"><label for="operatorReportMonth">Month</label><select id="operatorReportMonth" onchange="operatorCalendarChanged()"><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+        <div id="operatorReportYearWrap"><label for="operatorReportYear">Year</label><select id="operatorReportYear" onchange="operatorCalendarChanged()"></select></div>
+      </div>
+      <div class="reloader-actions"><button class="btn-secondary" type="button" onclick="operatorReportToday()">Today</button><button class="btn-secondary" type="button" id="operatorCsvBtn" onclick="downloadOperatorSalesCSV()" disabled>Download CSV</button><button class="btn-secondary" type="button" id="operatorSyncBtn" onclick="syncOperatorSales(true)">Sync my sales</button></div>
+      <div class="status-msg" id="operatorReportStatus" role="status" aria-live="polite"></div>
+      <div class="reloader-kpis">
+        <div class="reloader-kpi"><span>Total top-up collections</span><strong id="operatorReportTotal">—</strong></div>
+        <div class="reloader-kpi"><span>Transactions</span><strong id="operatorReportCount">—</strong></div>
+        <div class="reloader-kpi"><span>Average transaction</span><strong id="operatorReportAverage">—</strong></div>
+      </div>
+      <div class="tx-title" id="operatorReportTitle">Period breakdown</div>
+      <div class="reloader-bars" id="operatorReportBars"></div>
+      <div class="reloader-report-table"><table><thead><tr><th>Segment</th><th>Transactions</th><th>Amount (PHP)</th></tr></thead><tbody id="operatorReportBreakdown"></tbody></table></div>
+      <div class="tx-title">Branch transaction details</div>
+      <div class="reloader-muted">Up to 100 rows are shown; CSV includes every transaction in the selected period.</div>
+      <div class="reloader-report-table"><table><thead><tr><th>Date / Time (PHT)</th><th>Operator UID</th><th>Card UID</th><th>Transaction ID</th><th>Amount</th></tr></thead><tbody id="operatorReportRows"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- Personal account management -->
+  <section class="reloader-pane" id="rpane-profile">
+    <div class="card show"><div class="user-name">My Profile</div>
+      <p class="reloader-muted">Update your operator name. Your branch assignment and account permissions can be changed only by a Super Admin.</p>
+      <label for="profileEmail">Sign-in email (read-only)</label><input id="profileEmail" type="email" disabled>
+      <label for="profileBranch">Permanent Branch UID (read-only)</label><input id="profileBranch" disabled>
+      <label for="profileName">Display name</label><input id="profileName" maxlength="100" autocomplete="name">
+      <div class="reloader-actions"><button type="button" class="btn-primary" id="profileSaveBtn" onclick="saveOperatorName()">Save name</button></div>
+      <div class="status-msg" id="profileStatus" role="status" aria-live="polite"></div>
+    </div>
+    <div class="card show"><div class="tx-title">Change Password</div>
+      <p class="reloader-muted">For security, enter your current password to verify your identity before choosing a new one. You will need to sign in again after changing it.</p>
+      <label for="oldPassword">Current password</label><input id="oldPassword" type="password" autocomplete="current-password">
+      <div class="reloader-form-grid">
+        <div><label for="newPassword">New password (8+ characters)</label><input id="newPassword" type="password" autocomplete="new-password"></div>
+        <div><label for="confirmNewPassword">Confirm new password</label><input id="confirmNewPassword" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="reloader-actions"><button class="btn-primary" type="button" id="profilePasswordBtn" onclick="changeOperatorPassword()">Update password</button></div>
+      <div class="status-msg" id="passwordStatus" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ MODAL: CONFIRM TRANSFER ============ -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Confirm transfer</div>
+    <p>Collect the cash first. This moves funds out of your operating wallet and onto the customer's card immediately.</p>
+    <div class="confirm-rows">
+      <div class="confirm-row"><span>Cardholder</span><b id="cfName">—</b></div>
+      <div class="confirm-row"><span>Card UID</span><b class="mono" id="cfUid">—</b></div>
+      <div class="confirm-row"><span>Cash to collect</span><b class="mono amount" id="cfAmount">—</b></div>
+      <div class="confirm-row"><span>Card balance after</span><b class="mono" id="cfCardAfter">—</b></div>
+      <div class="confirm-row"><span>Your wallet after</span><b class="mono" id="cfWalletAfter">—</b></div>
+    </div>
+    <div class="status-msg" id="confirmStatusMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-primary" id="confirmTransferBtn" onclick="executeTransfer()">Transfer funds</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat build — matches index.html) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+<script>
+  // ---------------- Firebase project config (same project as index.html) ----------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDzjlIarL2CFVROdkvY09wzE5eymwkAh4",
+    authDomain: "solar-charging-epayment.firebaseapp.com",
+    databaseURL: "https://solar-charging-epayment-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "solar-charging-epayment",
+    storageBucket: "solar-charging-epayment.firebasestorage.app",
+    messagingSenderId: "560912540285",
+    appId: "1:560912540285:web:ee8a922e2d5213445c8714",
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  const ACCESS_DENIED = 'Access denied. Authorized reloader account required.';
+  const GAUGE_FULL = 500;   // ₱ that fills the card balance gauge (visual only, same as admin)
+
+  let reloaderUid    = null;  // Firebase Auth UID of the signed-in booth operator
+  let walletBalance  = 0;     // live mirror of reloaders/{uid}/balance
+  let currentCardUid = null;  // customer card currently on screen
+  let currentCard    = null;  // its data
+  let transferInFlight = false;
+  let cardLookupRequestId = 0; // ignore any older, slower lookup after a new scan
+  let cardInputAutoSearchTimer = null;
+  let signOutNotice  = null;  // error to show on the login screen after a forced sign-out
+
+  // Listener handles so we never leave a reloader's data streaming after sign-out
+  let accountRef = null, walletRef = null, salesRef = null, branchReportRef = null;
+  let operatorBranchUid = '';
+  let branchReportLoaded = false;
+  let branchSalesRows = [];
+  let operatorCurrentReport = null;
+  let activeOperatorBranch = '';
+  let syncBusy = false;
+  let syncQueued = false;
+
+  function peso(n) { return '₱' + (Number(n) || 0).toFixed(2); }
+  function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+  // ================================================================
+  // ============ AUTH + AUTHORIZATION GATE ========================
+  // ================================================================
+  // Signing in is not enough: the UID must also exist under reloaders/{uid}.
+  // Any other Firebase account (a customer, the admin's own test user, a
+  // stranger who guessed a password) is signed straight back out.
+  auth.onAuthStateChanged((user) => {
+    if (!user) { showLoginScreen(); return; }
+
+    db.ref('reloaders/' + user.uid).once('value').then((snap) => {
+      if (!snap.exists()) { forceSignOut(ACCESS_DENIED); return; }
+
+      const account = snap.val() || {};
+      const status = account.status || 'active';
+      if (status !== 'active') {
+        forceSignOut('This reloader account is ' + status + '. Contact the administrator.');
+        return;
+      }
+      enterTerminal(user, account);
+    }).catch(() => {
+      // A permission-denied read means this account is not a reloader as far
+      // as the database rules are concerned — treat it the same way.
+      forceSignOut(ACCESS_DENIED);
+    });
+  });
+
+  function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
+    const btn   = document.getElementById('loginBtn');
+    hideLoginError();
+
+    if (!email || !pass) {
+      showLoginError('Enter both your email and password.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    auth.signInWithEmailAndPassword(email, pass).catch(() => {
+      showLoginError('Sign-in failed: check the email and password.');
+    }).then(() => {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    });
+  }
+
+  function doLogout() {
+    detachListeners();
+    auth.signOut();
+  }
+
+  function forceSignOut(message) {
+    signOutNotice = message;
+    detachListeners();
+    auth.signOut();
+  }
+
+  function enterTerminal(user, account) {
+    reloaderUid = user.uid;
+    operatorBranchUid = String(account.branchUid || '');
+    document.getElementById('operatorBranchUid').textContent=operatorBranchUid || 'Not assigned';
+    document.getElementById('profileBranch').value=operatorBranchUid || 'Unassigned';
+    document.getElementById('profileEmail').value=user.email || account.email || '';
+    document.getElementById('profileName').value=account.name || '';
+    operatorReportToday();
+    showReloaderPane('operate');
+
+    document.getElementById('reloaderName').textContent  = account.name || 'Unnamed reloader';
+    document.getElementById('reloaderUidTag').textContent = user.uid;
+    document.getElementById('reloaderEmail').textContent = account.email || user.email || '—';
+
+    const statusEl = document.getElementById('reloaderStatus');
+    statusEl.textContent = 'Active';
+    statusEl.className = 'status-pill active';
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('terminal').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+
+    attachListeners();
+    document.getElementById('cardInput').focus();
+  }
+
+  function showLoginScreen() {
+    ++cardLookupRequestId;
+    clearTimeout(cardInputAutoSearchTimer);
+    document.getElementById('cardInput').value = '';
+    reloaderUid = null;
+    operatorBranchUid = '';
+    branchSalesRows=[]; branchReportLoaded=false;operatorCurrentReport=null;
+    document.getElementById('operatorCsvBtn').disabled=true;
+    walletBalance = 0;
+    resetCardView();
+    closeConfirmModal();
+
+    document.getElementById('terminal').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+
+    if (signOutNotice) {
+      showLoginError(signOutNotice);
+      signOutNotice = null;
+    }
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.className = 'error-msg show';
+  }
+  function hideLoginError() {
+    document.getElementById('loginError').className = 'error-msg';
+  }
+
+  // ================================================================
+  // ============ LIVE LISTENERS ===================================
+  // ================================================================
+  function attachListeners() {
+    // Live operating wallet balance
+    walletRef = db.ref('reloaders/' + reloaderUid + '/balance');
+    walletRef.on('value', (snap) => {
+      walletBalance = Number(snap.val()) || 0;
+      renderWallet();
+    });
+
+    // Account node: picks up a rename or a remote suspension while the booth is open
+    accountRef = db.ref('reloaders/' + reloaderUid);
+    accountRef.on('value', (snap) => {
+      const account = snap.val();
+      if (!account) { forceSignOut(ACCESS_DENIED); return; }
+      if ((account.status || 'active') !== 'active') {
+        forceSignOut('This reloader account was ' + (account.status || 'suspended') + ' by the administrator.');
+        return;
+      }
+      document.getElementById('reloaderName').textContent = account.name || 'Unnamed reloader';
+      if(document.activeElement !== document.getElementById('profileName')) document.getElementById('profileName').value=account.name || '';
+      const uid=String(account.branchUid||'');
+      if (uid!==operatorBranchUid) {
+        forceSignOut('Branch assignment changed. Please sign in again to refresh your branch permissions.');return;
+      }
+    });
+
+    // Terminal history log
+    salesRef = db.ref('reloaders/' + reloaderUid + '/sales_history').limitToLast(50);
+    salesRef.on('value', renderSalesHistory);
+    // Subscribes ONLY to the signed-in agent's assigned branch. Security rules
+    // MUST deny other branch reads independently of this client code.
+    if(operatorBranchUid) {
+      branchReportLoaded=false;
+      branchReportRef=db.ref('branch_sales/'+operatorBranchUid);
+      branchReportRef.on('value', receiveOperatorBranchSales, err=>{
+        branchReportLoaded=false; branchSalesRows=[];
+        reportStatus('error','Branch report access denied: '+(err.code||err.message)+'. Publish the supplied Firebase Security Rules addition.');
+        renderOperatorReport();
+      });
+      // A successful operator login also repairs missed mirrored sales (if tagged).
+      syncOperatorSales(false);
+    } else {
+      reportStatus('error','Your operator account has no Branch UID. Ask the Super Admin to assign a registered branch.');
+    }
+  }
+
+  function detachListeners() {
+    if (walletRef)  { walletRef.off();  walletRef  = null; }
+    if (accountRef) { accountRef.off(); accountRef = null; }
+    if (salesRef)   { salesRef.off();   salesRef   = null; }
+    if (branchReportRef) { branchReportRef.off(); branchReportRef=null; }
+    branchReportLoaded=false;branchSalesRows=[];operatorCurrentReport=null;
+  }
+
+  function renderWallet() {
+    document.getElementById('walletValue').textContent = (walletBalance).toFixed(2);
+    document.getElementById('walletBadge').classList.toggle('empty', walletBalance <= 0);
+  }
+
+  // ================================================================
+  // ============ CUSTOMER CARD LOOKUP =============================
+  // ================================================================
+  // R20XC-USB (13.56 MHz): 10 decimal digits encode the same four-byte UID
+  // as the MFRC522, but in reverse byte order. Verified against four cards.
+  // Preserve the leading zero by treating the USB output as a string.
+  function usbDecimalToMFRC522(raw) {
+    const value = String(raw).trim();
+    if (!/^\d{10}$/.test(value)) {
+      throw new Error('Expected exactly 10 decimal digits from the USB reader.');
+    }
+    const decimal = BigInt(value);
+    if (decimal > 0xFFFFFFFFn) {
+      throw new Error('USB reader number is too large for a 4-byte card UID.');
+    }
+    const hex = decimal.toString(16).toUpperCase().padStart(8, '0');
+    return hex.match(/.{2}/g).reverse().join('');
+  }
+
+  // Keep the original manual hexadecimal UID lookup. Only numeric 10-digit
+  // R20XC outputs are converted, so existing registrations are unchanged.
+  function normalizeCardUid(raw) {
+    const value = String(raw).trim().toUpperCase();
+    return /^\d{10}$/.test(value) ? usbDecimalToMFRC522(value) : value;
+  }
+
+  // Optional raw UID lets fast USB scans search without requiring focus.
+  function fetchCard(rawInput) {
+    clearTimeout(cardInputAutoSearchTimer);
+    if (!reloaderUid || !auth.currentUser) return;
+    if (transferInFlight || document.getElementById('confirmModalOverlay').classList.contains('show')) {
+      return; // Do not switch customers during confirmation or transfer.
+    }
+
+    const input = document.getElementById('cardInput');
+    let uid;
+    try {
+      uid = normalizeCardUid(typeof rawInput === 'string' ? rawInput : input.value);
+    } catch (error) {
+      ++cardLookupRequestId;
+      resetCardView(); // Never leave the previous customer selected after a bad scan.
+      showStatus('error', 'RFID scan rejected: ' + error.message);
+      return;
+    }
+    if (!uid) {
+      showStatus('error', 'Enter or scan a card UID first.');
+      return;
+    }
+
+    input.value = uid;
+    const requestId = ++cardLookupRequestId;
+    resetCardView();
+    showStatus('info', 'Reading card ' + uid + '…');
+
+    db.ref('users/' + uid).once('value').then((snap) => {
+      if (requestId !== cardLookupRequestId || !reloaderUid) return;
+      if (!snap.exists()) {
+        showStatus('error', 'Card ' + uid + ' is not registered. The administrator has to register it before it can be reloaded.');
+        return;
+      }
+      renderCard(uid, snap.val());
+      hideStatus();
+    }).catch((err) => {
+      if (requestId !== cardLookupRequestId || !reloaderUid) return;
+      showStatus('error', 'Lookup failed: ' + err.message);
+    });
+  }
+
+  function renderCard(uid, data) {
+    currentCardUid = uid;
+    currentCard = data || {};
+
+    document.getElementById('custName').textContent  = currentCard.name || 'Unnamed cardholder';
+    document.getElementById('custUid').textContent   = uid;
+    document.getElementById('custPhone').textContent = currentCard.phone || 'No phone on file';
+
+    const status = currentCard.status || 'active';
+    const statusEl = document.getElementById('custStatus');
+    statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    statusEl.className = 'status-pill ' + (status === 'active' ? 'active' : 'blocked');
+
+    const balance = Number(currentCard.balance) || 0;
+    document.getElementById('custBalance').textContent = balance.toFixed(2);
+    document.getElementById('custGauge').style.width = Math.min(100, (balance / GAUGE_FULL) * 100) + '%';
+
+    document.getElementById('customerCard').classList.add('show');
+    document.getElementById('reloadAmount').focus();
+  }
+
+  function resetCardView() {
+    currentCardUid = null;
+    currentCard = null;
+    document.getElementById('customerCard').classList.remove('show');
+    document.getElementById('reloadAmount').value = '';
+  }
+
+  // ---- amount helpers ----
+  function addQuickAmount(value) {
+    const el = document.getElementById('reloadAmount');
+    el.value = round2((parseFloat(el.value) || 0) + value);
+  }
+  function clearAmount() {
+    document.getElementById('reloadAmount').value = '';
+    document.getElementById('reloadAmount').focus();
+  }
+
+  // ================================================================
+  // ============ VALIDATION + CONFIRMATION ========================
+  // ================================================================
+  // Returns the validated amount, or null after showing the reason why not.
+  function validateTransfer() {
+    if (!currentCardUid) {
+      showStatus('error', 'Fetch a customer card first.');
+      return null;
+    }
+    if ((currentCard.status || 'active') !== 'active') {
+      showStatus('error', 'This card is blocked. It cannot be reloaded until the administrator reactivates it.');
+      return null;
+    }
+
+    const amount = round2(parseFloat(document.getElementById('reloadAmount').value));
+    if (!amount || !isFinite(amount) || amount <= 0) {
+      showStatus('error', 'Enter a reload amount greater than ₱0.');
+      return null;
+    }
+    if (amount > walletBalance) {
+      showStatus('error', 'Insufficient terminal wallet balance.');
+      return null;
+    }
+    return amount;
+  }
+
+  function openConfirmModal() {
+    const amount = validateTransfer();
+    if (amount === null) return;
+    hideStatus();
+
+    const cardAfter = round2((Number(currentCard.balance) || 0) + amount);
+    const walletAfter = round2(walletBalance - amount);
+
+    document.getElementById('cfName').textContent        = currentCard.name || 'Unnamed cardholder';
+    document.getElementById('cfUid').textContent         = currentCardUid;
+    document.getElementById('cfAmount').textContent      = peso(amount);
+    document.getElementById('cfCardAfter').textContent   = peso(cardAfter);
+    document.getElementById('cfWalletAfter').textContent = peso(walletAfter);
+
+    document.getElementById('confirmStatusMsg').className = 'status-msg';
+    document.getElementById('confirmModalOverlay').classList.add('show');
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirmModalOverlay').classList.remove('show');
+  }
+
+  function setTransferBusy(busy) {
+    transferInFlight = busy;
+    document.getElementById('confirmTransferBtn').disabled = busy;
+    document.getElementById('transferBtn').disabled = busy;
+    document.getElementById('confirmTransferBtn').textContent = busy ? 'Transferring…' : 'Transfer funds';
+  }
+
+  function showConfirmError(msg) {
+    const el = document.getElementById('confirmStatusMsg');
+    el.textContent = msg;
+    el.className = 'status-msg show error';
+  }
+
+  // ================================================================
+  // ============ FUND TRANSFER ====================================
+  // ================================================================
+  // Realtime Database has no cross-node transaction, so this runs as a
+  // guarded two-step with a compensating rollback:
+  //   1. transaction() on the reloader wallet — aborts server-side if the
+  //      balance is short, which also closes the race where two tabs spend
+  //      the same pesos at once.
+  //   2. transaction() on the customer card balance.
+  //   3. if step 2 fails, step 1 is refunded, so no money disappears.
+  //   4. both history records are written in one multi-path update().
+  function executeTransfer() {
+    if (transferInFlight) return;
+
+    const amount = validateTransfer();
+    if (amount === null) { closeConfirmModal(); return; }
+
+    const cardUid = currentCardUid;
+    const cardName = currentCard.name || '';
+    const walletBalRef = db.ref('reloaders/' + reloaderUid + '/balance');
+    const cardBalRef   = db.ref('users/' + cardUid + '/balance');
+
+    setTransferBusy(true);
+
+    // ---- step 1: debit the reloader wallet ----
+    walletBalRef.transaction((current) => {
+      const balance = Number(current) || 0;
+      if (balance < amount) return;          // undefined = abort, nothing written
+      return round2(balance - amount);
+    }).then((debit) => {
+      if (!debit.committed) {
+        throw new Error('INSUFFICIENT');
+      }
+      const walletAfter = Number(debit.snapshot.val()) || 0;
+
+      // ---- step 2: credit the customer card ----
+      return cardBalRef.transaction((current) => round2((Number(current) || 0) + amount))
+        .then((credit) => {
+          if (!credit.committed) throw new Error('CREDIT_ABORTED');
+          const cardAfter = Number(credit.snapshot.val()) || 0;
+
+          // ---- step 3: write both history records together ----
+          const timestamp = Date.now();
+          const txKey   = db.ref('users/' + cardUid + '/transactions').push().key;
+          const saleKey = db.ref('reloaders/' + reloaderUid + '/sales_history').push().key;
+
+          const updates = {};
+          updates['users/' + cardUid + '/transactions/' + txKey] = {
+            amount: amount,
+            balanceAfter: cardAfter,
+            type: 'reload',
+            method: 'reloader_terminal',
+            reloaderUid: reloaderUid,
+            timestamp: timestamp,
+          };
+          updates['reloaders/' + reloaderUid + '/sales_history/' + saleKey] = {
+            cardUid: cardUid,
+            customerName: cardName,
+            amount: amount,
+            cardBalanceAfter: cardAfter,
+            reloaderBalanceAfter: walletAfter,
+            timestamp: timestamp,
+          };
+
+          return db.ref().update(updates).then(() => ({ walletAfter: walletAfter, cardAfter: cardAfter }));
+        })
+        .catch((err) => {
+          // ---- rollback: put the money back in the wallet ----
+          return walletBalRef.transaction((current) => round2((Number(current) || 0) + amount))
+            .then(() => { throw err; }, () => { throw new Error('ROLLBACK_FAILED'); });
+        });
+    }).then((result) => {
+      closeConfirmModal();
+      showStatus('success',
+        'Loaded ' + peso(amount) + ' to ' + cardUid + '. Card balance ' + peso(result.cardAfter) +
+        ' · wallet left ' + peso(result.walletAfter) + '.');
+
+      document.getElementById('reloadAmount').value = '';
+      // Refresh the card on screen so the operator can show the customer the new balance
+      db.ref('users/' + cardUid).once('value').then((snap) => {
+        if (snap.exists()) renderCard(cardUid, snap.val());
+      });
+      document.getElementById('cardInput').select();
+    }).catch((err) => {
+      const code = err && err.message;
+      if (code === 'INSUFFICIENT') {
+        showConfirmError('Insufficient terminal wallet balance.');
+      } else if (code === 'ROLLBACK_FAILED') {
+        showConfirmError('Transfer failed and the wallet refund did not go through. Do not hand over the load — report this to the administrator with card ' + cardUid + '.');
+      } else if (code === 'CREDIT_ABORTED') {
+        showConfirmError('The card balance could not be updated. Your wallet was refunded — try again.');
+      } else {
+        showConfirmError('Transfer failed: ' + (code || 'unknown error') + '. Your wallet was refunded if it had already been charged.');
+      }
+    }).then(() => {
+      setTransferBusy(false);
+    });
+  }
+
+  // ================================================================
+  // ============ TERMINAL HISTORY LOG =============================
+  // ================================================================
+  function renderSalesHistory(snap) {
+    const data = snap.val() || {};
+    const entries = Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    const body  = document.getElementById('logBody');
+    const empty = document.getElementById('logEmpty');
+    const foot  = document.getElementById('logFoot');
+    body.innerHTML = '';
+
+    if (entries.length === 0) {
+      empty.style.display = 'block';
+      foot.textContent = '';
+      return;
+    }
+    empty.style.display = 'none';
+
+    entries.forEach((sale) => {
+      const when = sale.timestamp ? new Date(sale.timestamp).toLocaleString() : '—';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${when}</td>
+        <td>${sale.cardUid || '—'}</td>
+        <td class="tx-amount reload">+₱${(Number(sale.amount) || 0).toFixed(2)}</td>
+        <td>₱${(Number(sale.reloaderBalanceAfter) || 0).toFixed(2)}</td>
+      `;
+      body.appendChild(row);
+    });
+
+    // Cash the operator should be holding for today
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    const today = entries.filter((s) => (s.timestamp || 0) >= startOfDay.getTime());
+    const todayTotal = today.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+    foot.innerHTML = 'Today: <b>' + today.length + '</b> reload' + (today.length === 1 ? '' : 's') +
+                     ' · <b>' + peso(todayTotal) + '</b> in cash collected. Showing the last ' + entries.length + ' entries.';
+  }
+
+
+  // ================================================================
+  // ============ MY PROFILE (owner writes only) ====================
+  // ================================================================
+  function showReloaderPane(name) {
+    ['operate','reports','profile'].forEach(id=>{
+      document.getElementById('rpane-'+id).classList.toggle('active',id===name);
+      document.getElementById('rtab-'+id).classList.toggle('active',id===name);
+    });
+    if(name==='reports') renderOperatorReport();
+  }
+  function operatorMessage(id,type,message) {
+    const el=document.getElementById(id);
+    el.textContent=message;
+    el.className='status-msg show '+type;
+  }
+  async function saveOperatorName() {
+    const name=document.getElementById('profileName').value.trim();
+    if(!reloaderUid||!auth.currentUser) return;
+    if(name.length<2||name.length>100){operatorMessage('profileStatus','error','Enter a name between 2 and 100 characters.');return;}
+    const btn=document.getElementById('profileSaveBtn');btn.disabled=true;
+    try {
+      await db.ref('reloaders/'+reloaderUid+'/name').set(name);
+      operatorMessage('profileStatus','success','Your display name has been updated.');
+    } catch(err){operatorMessage('profileStatus','error','Could not save name: '+(err.code||err.message)+'. Check Firebase name write rules.');}
+    finally {btn.disabled=false;}
+  }
+  async function changeOperatorPassword() {
+    const user=auth.currentUser;
+    if(!user||!user.email||!reloaderUid)return;
+    const old=document.getElementById('oldPassword').value;
+    const next=document.getElementById('newPassword').value;
+    const confirm=document.getElementById('confirmNewPassword').value;
+    if(!old||next.length<8||next!==confirm||next===old){
+      operatorMessage('passwordStatus','error','Enter your current password and a different new password of at least 8 characters, then confirm it.');return;
+    }
+    const btn=document.getElementById('profilePasswordBtn');btn.disabled=true;
+    try {
+      const credential=firebase.auth.EmailAuthProvider.credential(user.email,old);
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(next);
+      for(const id of ['oldPassword','newPassword','confirmNewPassword'])document.getElementById(id).value='';
+      signOutNotice='Password changed successfully. Sign in with the new password.';
+      await doLogout();
+    } catch(err){operatorMessage('passwordStatus','error','Password update failed: '+(err.code||err.message));}
+    finally {btn.disabled=false;}
+  }
+
+  // ================================================================
+  // ============ BRANCH-RESTRICTED REPORTS =========================
+  // ================================================================
+  function reportStatus(type,message) {operatorMessage('operatorReportStatus',type,message);}
+  const PHT_HOURS=8*3600000;
+  const pad2=n=>String(n).padStart(2,'0');
+  const phtToday=()=>new Date(Date.now()+PHT_HOURS).toISOString().slice(0,10);
+  const phtParts=t=>{
+    const d=new Date(t+PHT_HOURS);
+    return {day:d.toISOString().slice(0,10),time:d.toISOString().slice(11,16)};
+  };
+  function operatorReportToday(){
+    const today=phtToday();
+    document.getElementById('operatorReportDate').value=today;
+    document.getElementById('operatorReportMonth').value=today.slice(5,7);
+    const yearSelect=document.getElementById('operatorReportYear');
+    const year=Number(today.slice(0,4));
+    yearSelect.replaceChildren();
+    for(let y=Math.max(2020,year-15);y<=year+5;y++)yearSelect.add(new Option(String(y),String(y)));
+    yearSelect.value=String(year);
+    renderOperatorReport();
+  }
+  function operatorDateChanged(){const d=document.getElementById('operatorReportDate').value;if(d){
+    document.getElementById('operatorReportMonth').value=d.slice(5,7);
+    const years=document.getElementById('operatorReportYear');
+    if(!Array.from(years.options).some(o=>o.value===d.slice(0,4)))years.add(new Option(d.slice(0,4),d.slice(0,4)));
+    years.value=d.slice(0,4); }
+    renderOperatorReport();
+  }
+  function operatorCalendarChanged(){renderOperatorReport();}
+  function operatorDateRange(){
+    const mode=document.getElementById('operatorReportPeriod').value;
+    const day=document.getElementById('operatorReportDate').value||phtToday();
+    const year=document.getElementById('operatorReportYear').value||day.slice(0,4);
+    const month=document.getElementById('operatorReportMonth').value||day.slice(5,7);
+    const parse=(s)=>Date.parse(s+'T00:00:00+08:00');
+    let start,end,segments=[],key;
+    if(mode==='daily'){
+      start=parse(day);end=start+86400000;
+      segments=Array.from({length:24},(_,i)=>({key:pad2(i),label:pad2(i)+':00'}));
+      key=(row)=>phtParts(row.timestamp).time.slice(0,2);
+    }else if(mode==='weekly'){
+      let first=parse(day);const d=new Date(first+PHT_HOURS).getUTCDay();first-=((d+6)%7)*86400000;
+      start=first;end=start+7*86400000;
+      segments=Array.from({length:7},(_,i)=>({key:new Date(start+PHT_HOURS+i*86400000).toISOString().slice(0,10),label:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}));
+      key=(row)=>phtParts(row.timestamp).day;
+    }else if(mode==='monthly'){
+      start=parse(year+'-'+month+'-01');
+      const m=Number(month);end=parse((m===12?Number(year)+1:year)+'-'+pad2(m===12?1:m+1)+'-01');
+      const count=Math.round((end-start)/86400000);
+      segments=Array.from({length:count},(_,i)=>({key:year+'-'+month+'-'+pad2(i+1),label:pad2(i+1)}));
+      key=(row)=>phtParts(row.timestamp).day;
+    }else {
+      start=parse(year+'-01-01');end=parse((Number(year)+1)+'-01-01');
+      segments=Array.from({length:12},(_,i)=>({key:year+'-'+pad2(i+1),label:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i]}));
+      key=(row)=>phtParts(row.timestamp).day.slice(0,7);
+    }
+    return {mode,start,end,segments,key};
+  }
+  function receiveOperatorBranchSales(snap){
+    branchSalesRows=[];
+    const operators=snap.val()||{};
+    for(const [uid,sales] of Object.entries(operators)) {
+      if(!sales||typeof sales!=='object')continue;
+      for(const [saleId,sale] of Object.entries(sales)) {
+        const amount=Number(sale?.amount),stamp=Number(sale?.timestamp);
+        if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(stamp)||stamp<=0)continue;
+        if(String(sale.branchUid)!==operatorBranchUid||String(sale.reloaderUid)!==uid)continue;
+        branchSalesRows.push({id:saleId,uid,cardUid:String(sale.cardUid||''),amount,timestamp:stamp});
+      }
+    }
+    branchReportLoaded=true;
+    renderOperatorReport();
+  }
+  function renderOperatorReport(){
+    const mode=document.getElementById('operatorReportPeriod').value;
+    document.getElementById('operatorReportDateWrap').style.display=['daily','weekly'].includes(mode)?'block':'none';
+    document.getElementById('operatorReportMonthWrap').style.display=mode==='monthly'?'block':'none';
+    document.getElementById('operatorReportYearWrap').style.display=['monthly','yearly'].includes(mode)?'block':'none';
+    document.getElementById('reportBranchLabel').textContent=operatorBranchUid || 'Not assigned';
+    const allIds=['operatorReportTotal','operatorReportCount','operatorReportAverage'];
+    if(!operatorBranchUid||!branchReportLoaded){
+      allIds.forEach(id=>document.getElementById(id).textContent='—');
+      document.getElementById('operatorCsvBtn').disabled=true;
+      document.getElementById('operatorReportBars').replaceChildren();
+      document.getElementById('operatorReportBreakdown').replaceChildren();
+      document.getElementById('operatorReportRows').replaceChildren();
+      if(operatorBranchUid&&!document.getElementById('operatorReportStatus').classList.contains('show'))reportStatus('info','Loading branch report from Firebase…');
+      return;
+    }
+    const range=operatorDateRange();
+    const sales=branchSalesRows.filter(s=>s.timestamp>=range.start&&s.timestamp<range.end).sort((a,b)=>b.timestamp-a.timestamp);
+    const total=sales.reduce((sum,r)=>sum+r.amount,0);
+    const groups=range.segments.map(s=>({...s,count:0,amount:0}));
+    const groupByKey=new Map(groups.map(g=>[g.key,g]));
+    for(const row of sales){const group=groupByKey.get(range.key(row));if(group){group.count++;group.amount+=row.amount;}}
+    operatorCurrentReport={sales,total,range,groups,branchUid:operatorBranchUid};
+    document.getElementById('operatorReportTotal').textContent=peso(total);
+    document.getElementById('operatorReportCount').textContent=String(sales.length);
+    document.getElementById('operatorReportAverage').textContent=peso(sales.length?total/sales.length:0);
+    document.getElementById('operatorCsvBtn').disabled=false;
+    document.getElementById('operatorReportTitle').textContent='Breakdown · '+mode.toUpperCase()+ ' · '+phtParts(range.start).day+' to '+phtParts(range.end-1).day;
+    const bars=document.getElementById('operatorReportBars');bars.replaceChildren();
+    const max=Math.max(1,...groups.map(g=>g.amount));
+    groups.forEach(g=>{
+      const col=document.createElement('div');col.className='reloader-bars-item';
+      const amount=document.createElement('div');amount.className='reloader-bars-amount';amount.textContent=g.amount?'₱'+Math.round(g.amount):'';
+      const chart=document.createElement('div');chart.className='reloader-bars-column';
+      const fill=document.createElement('div');fill.className='reloader-bars-fill';fill.style.height=Math.round(100*g.amount/max)+'px';
+      chart.appendChild(fill);
+      const label=document.createElement('div');label.textContent=g.label;
+      col.append(amount,chart,label);bars.appendChild(col);
+    });
+    const tbody=document.getElementById('operatorReportBreakdown');tbody.replaceChildren();
+    groups.forEach(g=>{
+      const tr=document.createElement('tr');
+      for(const v of [g.label,g.count,g.amount.toFixed(2)]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td);}
+      tbody.appendChild(tr);
+    });
+    const rows=document.getElementById('operatorReportRows');rows.replaceChildren();
+    sales.slice(0,100).forEach(s=>{
+      const tr=document.createElement('tr'),p=phtParts(s.timestamp);
+      for(const v of [p.day+' '+p.time,s.uid,s.cardUid,s.id,peso(s.amount)]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td);}
+      rows.appendChild(tr);
+    });
+    const status=document.getElementById('operatorReportStatus');
+    if(status.classList.contains('info')||status.classList.contains('show')&&status.textContent.startsWith('Branch report access'))status.className='status-msg';
+  }
+  function csvSafe(v){
+    let s=String(v??'');
+    if(/^[\s]*[=+\-@]/.test(s))s="'"+s; // mitigate spreadsheet formula injection
+    return '"'+s.replace(/"/g,'""')+'"';
+  }
+  function downloadOperatorSalesCSV(){
+    if(!operatorCurrentReport||!branchReportLoaded||operatorCurrentReport.branchUid!==operatorBranchUid)return;
+    const r=operatorCurrentReport;
+    const lines=[['TAMBAYAN BRANCH SALES REPORT'],['Branch UID',r.branchUid],['Reporting Period',r.range.mode],['Start PHT',phtParts(r.range.start).day],['End PHT',phtParts(r.range.end-1).day],['Total PHP',r.total.toFixed(2)],['Transaction Count',r.sales.length],[],['SEGMENT','TRANSACTIONS','AMOUNT PHP']];
+    for(const g of r.groups) lines.push([g.label,g.count,g.amount.toFixed(2)]);
+    lines.push([],['TRANSACTIONS'],['DATE PHT','TIME PHT','OPERATOR UID','CARD UID','SALE ID','AMOUNT PHP']);
+    for(const s of r.sales){const p=phtParts(s.timestamp);lines.push([p.day,p.time,s.uid,s.cardUid,s.id,s.amount.toFixed(2)]);}
+    const body='\uFEFF'+lines.map(row=>row.map(csvSafe).join(',')).join('\r\n');
+    const blob=new Blob([body],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='tambayan_branch_'+r.branchUid.replace(/[^A-Za-z0-9_-]/g,'_')+'_'+r.range.mode+'_'+phtParts(r.range.start).day+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }
+  // Repairs branch report indexes from the current operator's already-recorded sales.
+  // Untagged historical records are intentionally not backdated into a guessed branch.
+  async function syncOperatorSales(manual){
+    if(syncBusy){syncQueued=true;return;}
+    if(!reloaderUid||!operatorBranchUid||!auth.currentUser)return;
+    syncBusy=true;const btn=document.getElementById('operatorSyncBtn');btn.disabled=true;
+    try{
+      const snap=await db.ref('reloaders/'+reloaderUid+'/sales_history').once('value');
+      const data=snap.val()||{};let created=0,skipped=0,untagged=0;
+      for(const [key,sale] of Object.entries(data)){
+        if(!sale||!sale.branchUid){untagged++;continue;}
+        if(sale.branchUid!==operatorBranchUid){skipped++;continue;}
+        const path=db.ref('branch_sales/'+operatorBranchUid+'/'+reloaderUid+'/'+key);
+        // create-only rule; no updates to already mirrored sales
+        const existing=await path.once('value');
+        if(existing.exists())continue;
+        try {
+          await path.set({branchUid:operatorBranchUid,reloaderUid,cardUid:String(sale.cardUid||''),amount:Number(sale.amount),timestamp:Number(sale.timestamp)});
+          created++;
+        } catch(err){
+          // Make the failure visible; top-ups themselves must not be charged again.
+          throw new Error('Sales-index permission error: '+(err.code||err.message));
+        }
+      }
+      if(manual)reportStatus('success','Branch index sync completed: '+created+' new sale(s). '+untagged+' old untagged sale(s) excluded; '+skipped+' sale(s) from other assignments excluded.');
+      else if(untagged>0)reportStatus('info','Some historical sales have no verified Branch UID and remain unassigned ('+untagged+'). New sales are indexed automatically.');
+    }catch(err){reportStatus('error','Could not sync branch sales: '+err.message+'. Your card reloads were not reversed; ask the administrator to check database rules.');}
+    finally{
+      syncBusy=false;btn.disabled=false;
+      if(syncQueued){syncQueued=false;syncOperatorSales(false);}
+    }
+  }
+
+  // ================================================================
+  // ============ STATUS HELPERS + KEY BINDINGS ====================
+  // ================================================================
+  function showStatus(kind, msg) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    el.className = 'status-msg show ' + kind;
+  }
+  function hideStatus() {
+    document.getElementById('statusMsg').className = 'status-msg';
+  }
+
+  // The R20XC-USB is a keyboard-wedge reader (it types digits like a keyboard).
+  // A scan has 10 fast digits, possibly followed by Enter. Capture such a scan
+  // while the operator is on the Reload Terminal tab, even if an amount input
+  // has focus. A deliberate button click is still needed to transfer funds.
+  const READER_MAX_INTERKEY_MS = 140;
+  let readerDigits = '';
+  let readerLastKeyAt = 0;
+  let readerKeyTarget = null;
+  let readerTargetOriginalValue = '';
+  let readerIgnoreEnterUntil = 0;
+
+  function readerTerminalPresent() {
+    return !!reloaderUid && !!auth.currentUser &&
+      document.getElementById('terminal').style.display !== 'none' &&
+      document.getElementById('rpane-operate').classList.contains('active');
+  }
+  function scannerReady() {
+    return readerTerminalPresent() &&
+      !document.getElementById('confirmModalOverlay').classList.contains('show') &&
+      !transferInFlight;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    // Still recognize and swallow full scans while confirmation is open;
+    // otherwise the scanner's Enter suffix could click "Transfer funds".
+    if (!readerTerminalPresent() || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) {
+      readerDigits = '';
+      return;
+    }
+    const now = performance.now();
+    // The USB reader often sends Enter immediately after the tenth digit.
+    // Prevent that Enter from submitting the amount/confirmation form.
+    if (e.key === 'Enter' && now < readerIgnoreEnterUntil) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if (!/^\d$/.test(e.key) || e.repeat) {
+      readerDigits = '';
+      return;
+    }
+    if (!readerDigits || now - readerLastKeyAt > READER_MAX_INTERKEY_MS || e.target !== readerKeyTarget) {
+      readerDigits = '';
+      readerKeyTarget = e.target;
+      readerTargetOriginalValue = ('value' in e.target) ? e.target.value : '';
+    }
+    readerDigits += e.key;
+    readerLastKeyAt = now;
+    if (readerDigits.length !== 10) return;
+
+    const scanned = readerDigits;
+    readerDigits = '';
+    readerIgnoreEnterUntil = now + 250;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    // The previous nine digits may have been entered into whichever form field
+    // had focus. Restore that field, instead of leaving a stray amount behind.
+    const input = document.getElementById('cardInput');
+    if (readerKeyTarget && readerKeyTarget !== input && 'value' in readerKeyTarget) {
+      readerKeyTarget.value = readerTargetOriginalValue;
+    }
+    if (scannerReady()) fetchCard(scanned);
+    else if (!transferInFlight) showConfirmError('Close this confirmation before scanning a different card. No funds were transferred.');
+  }, true);
+
+  // When the card UID field is focused, 10-digit readings also auto-search
+  // if the reader is slower, pastes its output, or omits the Enter suffix.
+  const cardInputEl = document.getElementById('cardInput');
+  cardInputEl.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+    clearTimeout(cardInputAutoSearchTimer);
+    if (!scannerReady() || !/^\d{10}$/.test(e.target.value.trim())) return;
+    const scanned = e.target.value.trim();
+    cardInputAutoSearchTimer = setTimeout(() => {
+      if (scannerReady() && cardInputEl.value.trim() === scanned) fetchCard();
+    }, 200);
+  });
+  cardInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      fetchCard();
+    }
+  });
+  document.getElementById('reloadAmount').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') openConfirmModal();
+  });
+  document.getElementById('loginPass').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeConfirmModal();
+  });
+  document.getElementById('confirmModalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'confirmModalOverlay' && !transferInFlight) closeConfirmModal();
+  });
+</script>
+</body>
+</html>

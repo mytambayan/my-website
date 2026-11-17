@@ -578,12 +578,17 @@
     btn.disabled = true;
     btn.textContent = 'Signing in…';
 
-    auth.signInWithEmailAndPassword(email, pass).catch(() => {
-      showLoginError('Sign-in failed: check the email and password.');
-    }).then(() => {
-      btn.disabled = false;
-      btn.textContent = 'Sign in';
-    });
+    // Keep this Authorized Reloader account in this browser tab only.
+    // Avoid overwriting the Super Admin account in another tab.
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(() => auth.signInWithEmailAndPassword(email, pass))
+      .catch((err) => {
+        console.error('Authorized Reloader login error:', err.code || err.message);
+        showLoginError('Sign-in failed: check the email, password, or browser permissions.');
+      }).finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      });
   }
 
   function doLogout() {

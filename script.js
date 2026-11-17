@@ -100,9 +100,14 @@
       return;
     }
 
-    auth.signInWithEmailAndPassword(email, pass).catch(() => {
-      showLoginError('Sign-in failed: check the email and password.');
-    });
+    // Keep the Super Admin login in this browser tab only.
+    // This avoids replacing the Authorized Reloader's login in another tab.
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(() => auth.signInWithEmailAndPassword(email, pass))
+      .catch((err) => {
+        console.error('Super Admin login error:', err.code || err.message);
+        showLoginError('Sign-in failed: check the email, password, or browser permissions.');
+      });
   }
 
   function doLogout() {

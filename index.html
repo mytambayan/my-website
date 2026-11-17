@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAMBAYAN | Super Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Original admin.css is embedded so this website needs only index.html. -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!--  LOGIN  -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo" role="img" aria-label="TAMBAYAN logo"></div>
+    <div class="login-welcome">Welcome back, Ka-Tambay!</div>
+    <div class="login-subtext">Sign in to manage your solar charging network.</div>
+    <label for="loginEmail">Super Admin email</label>
+    <input type="email" id="loginEmail" placeholder="admin@tambay.ph">
+    <label for="loginPass">Password</label>
+    <input type="password" id="loginPass" placeholder="••••••••">
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<div id="dashboard" class="app-shell">
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-logo-area">
+      <div class="sidebar-logo-tile"><div class="brand-logo" role="img" aria-label="TAMBAYAN Solar Charging Station logo"></div></div>
+      <div class="sidebar-brand-name">TAMBAYAN<span class="sidebar-brand-dot">.</span></div>
+      <div class="sidebar-subtitle">Solar Charging Station</div>
+    </div>
+    <div class="sidebar-section-caption">WORKSPACE</div>
+    <nav class="tabs" aria-label="Admin navigation"><button type="button" class="tab-btn active" id="tabBtn-overview" onclick="showTab('overview')" aria-label="Overview"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/></svg><span class="nav-label">Overview</span></button>
+<button type="button" class="tab-btn" id="tabBtn-lookup" onclick="showTab('lookup')" aria-label="Card Lookup"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span class="nav-label">Card Lookup</span></button>
+<button type="button" class="tab-btn" id="tabBtn-reloads" onclick="showTab('reloads')" aria-label="Pending Reloads"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2M17 3h4v4"/></svg><span class="nav-label">Pending Reloads</span><span class="tab-badge" id="reloadBadge">0</span></button>
+<button type="button" class="tab-btn" id="tabBtn-users" onclick="showTab('users')" aria-label="Manage Users"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg><span class="nav-label">Manage Users</span></button>
+<button type="button" class="tab-btn" id="tabBtn-reloaders" onclick="showTab('reloaders')" aria-label="Branch & Reloader"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 9l9-6 9 6M8 21v-8h8v8M7 9h10"/></svg><span class="nav-label">Branch & Reloader</span></button>
+<button type="button" class="tab-btn" id="tabBtn-reports" onclick="showTab('reports')" aria-label="Sales Reports"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h17M8 16l4-5 3 2 5-7"/></svg><span class="nav-label">Sales Reports</span></button>
+<button type="button" class="tab-btn" id="tabBtn-station" onclick="showTab('station')" aria-label="Station Monitoring"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="m13 6-3 6h4l-3 6"/></svg><span class="nav-label">Station Monitoring</span><span class="tab-badge" id="stationBadge">!</span></button></nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-system-badge"><span class="system-dot" id="sideSystemDot"></span><div><strong>System overview</strong><small id="sideSystemText">Awaiting station data</small></div></div>
+      <div class="sidebar-foot">TAMBAYAN · Super Admin<br>Connected to Firebase</div>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileNav(false)"></div>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="header-left"><button type="button" class="mobile-menu" aria-label="Open menu" onclick="toggleMobileNav()"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><div class="top-eyebrow">TAMBAYAN <span class="breadcrumb-sep">/</span> SUPER ADMIN</div><div class="header-current" id="headerCurrent">Overview</div></div></div>
+      <div class="header-actions"><span class="live-indicator"><span></span> Live dashboard</span><div class="header-avatar" aria-label="Administrator">SA</div><button class="header-signout" onclick="doLogout()" title="Sign out"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button></div>
+    </header>
+    <div class="workspace-inner">
+      <div class="page-intro" id="pageIntro"><div><h1 id="pageHeading">Hello, Ka-Tambay! <span class="wave">☀</span></h1><p id="pageSubtitle">Your charging network, branches and daily performance—all in one place.</p></div><div class="date-pill" id="dashDatePill"></div></div>
+      <div class="tab-panel active" id="tabPanel-overview">
+        <section class="overview-hero" aria-label="TAMBAYAN solar operations welcome banner">
+          <!-- Decorative illustration stays inside this banner; no business data or app logic changed. -->
+          <div class="hero-atmosphere" aria-hidden="true">
+            <div class="hero-halo hero-halo-a"></div><div class="hero-halo hero-halo-b"></div>
+            <div class="hero-tech-grid"></div>
+            <svg class="hero-energy-paths" viewBox="0 0 1300 300" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="heroEnergyGradient" x1="350" y1="300" x2="1290" y2="80" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4b9360" stop-opacity="0"/><stop offset=".48" stop-color="#529462" stop-opacity=".26"/><stop offset="1" stop-color="#276940" stop-opacity=".08"/>
+                </linearGradient>
+                <linearGradient id="heroBrightGradient" x1="360" y1="270" x2="1300" y2="80" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#9bcc4e" stop-opacity="0"/><stop offset=".53" stop-color="#ffffff" stop-opacity=".9"/><stop offset="1" stop-color="#d3f48d" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M330 316 C540 245 621 277 739 199 S1032 28 1320 174" stroke="url(#heroEnergyGradient)" stroke-width="2"/>
+              <path d="M390 327 C575 276 641 290 768 217 S1051 66 1338 188" stroke="url(#heroEnergyGradient)" stroke-width="1"/>
+              <path class="hero-energy-moving" d="M330 316 C540 245 621 277 739 199 S1032 28 1320 174" stroke="url(#heroBrightGradient)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 16"/>
+              <circle cx="770" cy="209" r="5" fill="#F1CB71" fill-opacity=".75"/><circle cx="770" cy="209" r="11" stroke="#fff" stroke-opacity=".42"/>
+              <circle cx="1093" cy="78" r="4" fill="#ffffff" fill-opacity=".65"/>
+            </svg>
+            <span class="hero-spark hero-spark-one">✦</span><span class="hero-spark hero-spark-two">✧</span><span class="hero-spark hero-spark-three">✦</span>
+          </div>
+          <div class="overview-hero-content">
+            <div class="hero-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg> SOLAR-POWERED OPERATIONS</div>
+            <h2>Good energy. Better<br>connections.</h2>
+            <p>Monitor what matters across your TAMBAYAN locations.</p>
+            <div class="hero-buttons"><button type="button" class="hero-primary" onclick="showTab('reports')">View sales reports <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button><button type="button" class="hero-secondary" onclick="showTab('reloaders')">Manage branches</button></div>
+            <div class="hero-footerline"><span class="hero-footermark"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7V2z"/></svg></span><span>POWERING EVERY CONNECTION</span><i></i><i></i><i></i></div>
+          </div>
+          <div class="hero-art">
+            <div class="hero-art-glow" aria-hidden="true"></div>
+            <div class="hero-art-orbit hero-art-orbit-one" aria-hidden="true"></div>
+            <div class="hero-art-orbit hero-art-orbit-two" aria-hidden="true"></div>
+            <div class="hero-logo" role="img" aria-label="TAMBAYAN solar-powered charging station logo"></div>
+            <div class="hero-float hero-float-solar" aria-hidden="true"><span class="hero-float-icon">☀</span><span><strong>Solar powered</strong><small>Better everyday energy</small></span></div>
+            <div class="hero-float hero-float-energy" aria-hidden="true"><span class="hero-float-bolt"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="m13 2-9 12h7l-1 8 10-12h-7V2z"/></svg></span><span>Smart charging</span></div>
+          </div>
+        </section>
+        <div class="overview-section-line"><div><h2>Business snapshot</h2><p>Today in Philippine Time (UTC+8)</p></div><button type="button" class="tiny-link" onclick="showTab('reports')">Open detailed reports <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div>
+        <div class="overview-kpis">
+          <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-amber"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7l0-8z"/></svg></span><span class="metric-kicker">CHARGING</span></div><div class="metric-label">Charging revenue</div><div class="metric-value" id="ovCharging">—</div><div class="metric-foot" id="ovChargingNote">Loading transactions…</div></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-green"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 0 0-2-2H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h15V8H5a3 3 0 0 1 0-6"/><path d="M20 12h-5v4h5"/></svg></span><span class="metric-kicker">TOP-UPS</span></div><div class="metric-label">Reloader collections</div><div class="metric-value" id="ovTopups">—</div><div class="metric-foot" id="ovTopupsNote">Loading sales history…</div></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-blue"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span><span class="metric-kicker">RFID</span></div><div class="metric-label">Registered cards</div><div class="metric-value" id="ovCards">—</div><div class="metric-foot" id="ovCardsNote">Global customer accounts</div></article>
+          <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-lime"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 9l9-6 9 6M8 21v-8h8v8M7 9h10"/></svg></span><span class="metric-kicker">LOCATIONS</span></div><div class="metric-label">Active branches</div><div class="metric-value" id="ovBranches">—</div><div class="metric-foot" id="ovBranchesNote">Registered physical locations</div></article>
+        </div>
+        <div class="overview-lower-grid">
+          <section class="insight-card trend-card"><div class="insight-head"><div><h3>Revenue trends</h3><p>Last 7 days · charging vs. reload collections</p></div><div class="chart-legend"><span><i class="legend-dot charging"></i> Charging</span><span><i class="legend-dot reloads"></i> Top-ups</span></div></div><div class="chart-shell"><svg id="overviewTrendChart" role="img" aria-label="7 day revenue trends" viewBox="0 0 680 230" preserveAspectRatio="none"></svg><div class="chart-axis" id="ovTrendLabels"></div></div><div class="chart-footnote" id="ovTrendNote">Loading live records…</div></section>
+          <section class="insight-card health-card"><div class="insight-head"><div><h3>Station health</h3><p>Live Gentai battery telemetry</p></div><span class="station-status is-unknown" id="ovStationStatus">Checking</span></div><div class="health-main"><div class="health-gauge-wrap"><div class="health-ring" id="ovHealthRing"><div><div class="health-percent" id="ovSoc">—</div><span>Battery SOC</span></div></div></div><div class="health-stats"><div><span>Pack voltage</span><strong id="ovVoltage">—</strong></div><div><span>Stored energy</span><strong id="ovEnergy">—</strong></div><div><span>Updated</span><strong id="ovStationUpdated">—</strong></div></div></div><button type="button" class="light-cta" onclick="showTab('station')">Open station monitoring <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></section>
+        </div>
+        <div class="overview-lower-grid second-grid">
+          <section class="insight-card branches-card"><div class="insight-head"><div><h3>Branch performance</h3><p>Today · only transactions with recorded branch IDs</p></div><button class="tiny-link" onclick="showTab('reloaders')">All locations <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><div class="table-scroll"><table class="modern-table"><thead><tr><th>BRANCH</th><th>TOP-UPS</th><th>CHARGING</th><th>AGENTS</th></tr></thead><tbody id="ovBranchRows"><tr><td colspan="4" class="overview-empty">Loading branches…</td></tr></tbody></table></div><p class="table-disclaimer" id="ovBranchWarning">Transactions without a branch UID are not assigned to a branch.</p></section>
+          <section class="insight-card quick-card"><div class="insight-head"><div><h3>At a glance</h3><p>What needs your attention</p></div></div><div class="quick-status-grid"><div class="quick-status-item"><span class="quick-icon ic-pending"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3zM12 9v4M12 17h.01"/></svg></span><div><span>Pending GCash reloads</span><strong id="ovPending">—</strong></div></div><div class="quick-status-item"><span class="quick-icon ic-active"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/></svg></span><div><span>Active reloaders</span><strong id="ovAgents">—</strong></div></div><div class="quick-status-item"><span class="quick-icon ic-wallet"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 0 0-2-2H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h15V8H5a3 3 0 0 1 0-6"/><path d="M20 12h-5v4h5"/></svg></span><div><span>Reloader wallet float</span><strong id="ovFloat">—</strong></div></div></div><p class="quick-explainer">Wallet float is operational credit, <b>not</b> additional sales revenue.</p><button type="button" class="light-cta" onclick="showTab('reloads')">Review pending requests <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></section>
+        </div>
+        <section class="insight-card activity-card"><div class="insight-head"><div><h3>Latest activity</h3><p>Recent recorded charging and reloader transactions</p></div><button class="tiny-link" onclick="showTab('reports')">Full report <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><div class="table-scroll"><table class="modern-table"><thead><tr><th>DATE & TIME (PHT)</th><th>TYPE</th><th>BRANCH</th><th>REFERENCE</th><th>AMOUNT</th></tr></thead><tbody id="ovRecentRows"><tr><td colspan="5" class="overview-empty">Loading activity…</td></tr></tbody></table></div></section>
+      </div>
+  <!--  TAB: CARD LOOKUP  -->
+  <div class="tab-panel" id="tabPanel-lookup">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Tap RFID card, enter UID, or phone number" autocomplete="off" spellcheck="false" aria-label="Search by customer RFID UID or phone number">
+      <button onclick="searchCard()">Search</button>
+    </div>
+    <div class="rfid-scan-guide" aria-label="USB RFID reader support">
+      <span class="rfid-scan-indicator" aria-hidden="true"></span>
+      <div><strong>USB RFID Tap-to-Search enabled</strong><span>With the 13.56 MHz R20XC-USB connected, tap a registered card while Card Lookup is open. The customer is searched automatically. Manual UID and phone search still work.</span></div>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+
+    <div class="card" id="userCard">
+      <div class="user-head">
+        <div>
+          <div class="user-name" id="userName">—</div>
+          <div class="user-meta"><span class="uid-tag" id="userUid">—</span> · <span id="userPhone">—</span></div>
+        </div>
+        <span class="status-pill active" id="userStatus">Active</span>
+      </div>
+
+      <div class="balance-block">
+        <div class="balance-label">Current balance</div>
+        <div class="balance-value">₱<span id="balanceValue">0.00</span></div>
+        <div class="gauge"><div class="gauge-fill" id="gaugeFill" style="width: 0%"></div></div>
+      </div>
+
+      <div class="reload-row">
+        <input type="number" id="reloadAmount" placeholder="Amount to add (₱)" min="0" step="1">
+        <button onclick="reloadBalance()">Add balance</button>
+      </div>
+      <div class="quick-amounts">
+        <button onclick="setQuickAmount(20)">+₱20</button>
+        <button onclick="setQuickAmount(50)">+₱50</button>
+        <button onclick="setQuickAmount(100)">+₱100</button>
+        <button onclick="setQuickAmount(200)">+₱200</button>
+      </div>
+    </div>
+
+    <div class="card" id="txCard">
+      <div class="tx-title">Recent transactions</div>
+      <div class="table-scroll">
+        <table id="txTable">
+          <thead><tr><th>Type</th><th>Amount</th><th>Balance after</th><th>When</th></tr></thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-tx" id="txEmpty">No transactions yet.</div>
+    </div>
+  </div>
+
+  <!--  TAB: PENDING GCASH RELOADS  -->
+  <div class="tab-panel" id="tabPanel-reloads">
+    <div class="status-msg" id="reloadsStatusMsg"></div>
+    <div class="card show">
+      <div class="tx-title">Pending GCash reloads</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Submitted</th><th>Card</th><th>Reference</th><th>Amount</th><th>Actions</th></tr></thead>
+          <tbody id="pendingBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-tx" id="pendingEmpty">No pending reload requests.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MANAGE USERS (CRUD) ============ -->
+  <div class="tab-panel" id="tabPanel-users">
+    <div class="status-msg" id="registerStatusMsg"></div>
+    <div class="rfid-scan-guide" aria-label="USB RFID registration support">
+      <span class="rfid-scan-indicator" aria-hidden="true"></span>
+      <div><strong>USB RFID Tap-to-Register enabled</strong><span>Tap an unregistered card while Manage Users is open. The form opens and the UID is filled automatically. Enter the customer's details, then click <b>Save new card</b> to register.</span></div>
+    </div>
+
+    <div class="card show">
+      <div class="section-head">
+        <div class="tx-title" style="margin-bottom:0;">Register new card</div>
+        <button class="btn-secondary" id="registerToggleBtn" onclick="toggleRegisterForm()">+ New card</button>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <label for="regUid">Card UID</label>
+        <input type="text" id="regUid" class="mono" placeholder="Tap card or enter UID, e.g. C4A24D11" style="text-transform:uppercase;" autocomplete="off" spellcheck="false">
+        <label for="regName">Full name</label>
+        <input type="text" id="regName" placeholder="Juan Dela Cruz">
+        <label for="regPhone">Phone number</label>
+        <input type="text" id="regPhone" placeholder="09xxxxxxxxx">
+        <label for="regBalance">Initial balance (₱)</label>
+        <input type="number" id="regBalance" placeholder="0" min="0" step="1">
+        <button class="btn-primary" onclick="registerCard()">Save new card</button>
+      </div>
+    </div>
+
+    <div class="card show">
+      <div class="section-head" style="margin-bottom:16px;">
+        <div class="tx-title" style="margin-bottom:0;">All registered users</div>
+      </div>
+      <input type="text" id="userFilterInput" placeholder="Filter by name, UID, or phone…">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>UID</th><th>Name</th><th>Phone</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-tx" id="usersEmpty">No registered cards yet.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BRANCH & RELOADER MANAGEMENT ============ -->
+  <div class="tab-panel" id="tabPanel-reloaders">
+    <div class="card show">
+      <div class="section-head">
+        <div>
+          <h2 class="management-title">Branch &amp; Reloader Management</h2>
+          <p class="branch-hint">Register a location and its first operator together. Each physical branch receives one permanent Branch UID; RFID cards remain global.</p>
+        </div>
+        <button class="btn-primary" type="button" id="reloaderToggleBtn" onclick="toggleReloaderForm()" style="width:auto;margin:0;">+ Register branch &amp; reloader</button>
+      </div>
+      <div id="reloaderStatusMsg" class="status-msg" role="status" aria-live="polite" style="margin-top:14px;"></div>
+      <div id="reloaderForm" class="registration-wizard" style="display:none;">
+        <div class="wizard-stephead"><span class="wizard-number">1</span><div><strong>Branch details</strong><p class="branch-hint">Create a physical branch once, or add an operator to an existing branch.</p></div></div>
+        <div class="wizard-modes" role="group" aria-label="Branch selection">
+          <label class="wizard-choice"><input type="radio" name="registrationBranchMode" id="regBranchModeNew" value="new" checked onchange="registrationModeChanged()"> New branch</label>
+          <label class="wizard-choice"><input type="radio" name="registrationBranchMode" id="regBranchModeExisting" value="existing" onchange="registrationModeChanged()"> Existing branch</label>
+        </div>
+        <div id="registerNewBranchWrap">
+          <label for="newBranchName">Official branch / location name <span class="required">*</span></label>
+          <input id="newBranchName" maxlength="100" placeholder="e.g. Tambayan 2 - Calambro" autocomplete="off">
+          <p class="branch-hint">A unique Branch UID is generated automatically after submission. No manual ID entry.</p>
+        </div>
+        <div id="registerExistingBranchWrap" style="display:none;">
+          <label for="newReloaderBranch">Select existing branch <span class="required">*</span></label>
+          <select id="newReloaderBranch"></select>
+          <p class="branch-hint">Use this to add staff to a location already registered. We will reuse its permanent Branch UID.</p>
+        </div>
+        <div class="wizard-divider"></div>
+        <div class="wizard-stephead"><span class="wizard-number">2</span><div><strong>Authorized reloader account</strong><p class="branch-hint">This operator is linked to the selected or newly generated Branch UID.</p></div></div>
+        <div class="wizard-grid">
+          <div><label for="newReloaderName">Operator / booth name <span class="required">*</span></label><input type="text" id="newReloaderName" maxlength="100" placeholder="e.g. Tambayan 2 - Maria Santos"></div>
+          <div><label for="newReloaderEmail">Sign-in email <span class="required">*</span></label><input type="email" id="newReloaderEmail" placeholder="booth2@example.com" autocomplete="off"></div>
+          <div><label for="newReloaderPass">Password (minimum 6 characters) <span class="required">*</span></label><input type="password" id="newReloaderPass" autocomplete="new-password" placeholder="Assign a secure password"></div>
+          <div><label for="newReloaderBalance">Starting wallet float (₱)</label><input type="number" id="newReloaderBalance" min="0" step="0.01" placeholder="0.00"></div>
+        </div>
+        <div class="wizard-footer"><p class="branch-hint">The branch and operator database records are saved together. If account creation fails, no branch record is created.</p>
+          <button class="btn-primary" id="createReloaderBtn" type="button" onclick="createReloader()" style="width:auto;margin:0;">Create branch &amp; reloader</button>
+        </div>
+      </div>
+    </div>
+    <div class="card show">
+      <div class="section-head"><div><div class="tx-title">Registered branches / locations</div><p class="branch-hint">View, rename, or remove unused locations. Branch UIDs never change. Use “Register operator” to link extra accounts.</p></div></div>
+      <div id="branchStatusMsg" class="status-msg" role="status" aria-live="polite"></div>
+      <div class="branch-filter-row"><label for="branchFilterInput">Search branches</label>
+        <input id="branchFilterInput" placeholder="Branch name or UID…" autocomplete="off" oninput="renderBranchesTable()"></div>
+      <div class="table-scroll" style="margin-top:14px;"><table><thead><tr><th>Permanent Branch UID</th><th>Location name</th><th>Linked operators</th><th>Status</th><th>Actions</th></tr></thead><tbody id="branchesBody"></tbody></table></div>
+      <div class="empty-tx" id="branchesEmpty">No registered branches yet. Use the form above to create a branch with its first reloader.</div>
+    </div>
+    <div class="card show">
+      <div class="tx-title">Authorized reloaders</div>
+      <p class="branch-hint">Manage registered operators, wallet float, and branch assignments. The last linked operator cannot be revoked or moved individually.</p>
+      <input type="text" id="reloaderFilterInput" placeholder="Filter by name, email, branch or UID…" style="margin:14px 0;">
+      <div class="table-scroll"><table><thead><tr><th>Store ID</th><th>Name</th><th>Branch / Branch UID</th><th>Email</th><th>Wallet</th><th>Status</th><th>Actions</th></tr></thead><tbody id="reloadersBody"></tbody></table></div>
+      <div class="empty-tx" id="reloadersEmpty">No reloaders yet. Register a branch and reloader above.</div>
+      <div class="batt-foot" id="reloadersFoot"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BUSINESS SALES REPORTS ============ -->
+  <div class="tab-panel" id="tabPanel-reports">
+    <div class="card show report-shell">
+      <div class="report-header">
+        <div>
+          <h2>Business Sales Reports</h2>
+          <p>Daily, weekly, monthly and yearly reports · Asia/Manila business time.</p>
+        </div>
+        <div class="report-actions">
+          <button class="btn-secondary" type="button" onclick="reportSetToday()">Today</button>
+          <button class="btn-secondary" type="button" id="reportCsvBtn" onclick="reportDownloadCSV()" disabled>Download CSV</button>
+          <button class="btn-secondary" type="button" id="reportXlsxBtn" onclick="reportDownloadExcel()" disabled>Download Excel (.xlsx)</button>
+          <button class="btn-primary" type="button" id="reportPdfBtn" onclick="reportDownloadPDF()" disabled>Download PDF</button>
+        </div>
+      </div>
+      <div class="report-filters">
+        <div><label for="reportSource">Sales category</label>
+          <select id="reportSource" onchange="reportSourceChanged()">
+            <option value="charging">Charging revenue (card transactions)</option>
+            <option value="reloader">Reloader collections (top-up sales)</option>
+          </select>
+        </div>
+        <div><label for="reportPeriod">Reporting period</label>
+          <select id="reportPeriod" onchange="reportPeriodChanged()">
+            <option value="daily">Daily</option><option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option><option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div id="reportDateWrap"><label for="reportDate">Reference date</label>
+          <input type="date" id="reportDate" onchange="reportReferenceDateChanged()">
+        </div>
+        <div id="reportMonthWrap" class="report-hidden"><label for="reportMonth">Select month</label>
+          <select id="reportMonth" onchange="reportCalendarChanged()">
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div id="reportYearWrap" class="report-hidden"><label for="reportYear">Select year</label>
+          <select id="reportYear" onchange="reportCalendarChanged()"></select>
+        </div>
+        <div id="reportStoreWrap"><label for="reportStore">Select Branch</label>
+          <select id="reportStore" onchange="renderSalesReport()"><option value="">All branches</option></select>
+        </div>
+      </div>
+      <p class="report-note" id="reportExplanation">Charging revenue uses completed card charge transactions. Balance reloads and wallet float are excluded.</p>
+      <div id="reportAlert" class="report-alert" role="status" aria-live="polite"></div>
+      <div class="report-kpis">
+        <div class="report-kpi"><div class="report-kpi-label">Total for period</div><div class="report-kpi-value" id="reportTotal">—</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Transactions</div><div class="report-kpi-value" id="reportTransactions">—</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Average transaction</div><div class="report-kpi-value" id="reportAverage">—</div></div>
+        <div class="report-kpi"><div class="report-kpi-label" id="reportEntitiesLabel">Cards with sales</div><div class="report-kpi-value" id="reportEntities">—</div></div>
+      </div>
+      <div class="report-divider"></div>
+      <div class="report-subhead" id="reportPeriodLabel">Sales by period</div>
+      <p class="report-note">The chart and tables update when Firebase data or the selected filters change.</p>
+      <div class="report-bars" id="reportBars" aria-label="Sales chart"></div>
+      <div class="report-subhead">Period breakdown</div>
+      <div class="report-table-wrapper"><table>
+        <thead><tr><th>Time segment</th><th>Transactions</th><th>Amount (PHP)</th></tr></thead>
+        <tbody id="reportBreakdownBody"></tbody>
+      </table></div>
+      <div class="report-divider"></div>
+      <div class="report-subhead">Recorded transactions</div>
+      <p class="report-note" id="reportRowsNote">Up to 100 transactions are displayed here; downloads contain all records in the selected report.</p>
+      <div class="report-table-wrapper"><table>
+        <thead><tr><th>Date / Time (PHT)</th><th id="reportOwnerTh">Card or booth</th><th>Card UID</th><th id="reportDetailTh">Customer / session</th><th>Transaction ID</th><th>Amount (PHP)</th></tr></thead>
+        <tbody id="reportDetailsBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: STATION / BATTERY ============ -->
+  <div class="tab-panel" id="tabPanel-station">
+    <div class="card show" id="batteryCard">
+
+      <div class="batt-offline" id="battOffline">
+        No recent data from the station. The ESP32, the WiFi link, or the Bluetooth link to the battery BMS may be down.
+      </div>
+
+      <div class="batt-head">
+        <div>
+          <div class="batt-title">Battery</div>
+          <div class="batt-sub">Gentai LiFePO&#8324; 12.8V &middot; 4S &middot; built-in BMS over Bluetooth</div>
+        </div>
+        <span class="status-pill active" id="battHealth">&mdash;</span>
+      </div>
+
+      <div class="batt-soc-row">
+        <div class="batt-soc" id="battPercent">&mdash;<small>%</small></div>
+        <div class="batt-flow" id="battFlow">Waiting for first reading&hellip;</div>
+      </div>
+      <div class="batt-gauge"><div class="batt-gauge-fill" id="battGauge"></div></div>
+
+      <div class="batt-grid">
+        <div class="batt-cellbox"><div class="batt-cell-label">Pack voltage</div><div class="batt-cell-value" id="battVolt">&mdash;</div></div>
+        <div class="batt-cellbox"><div class="batt-cell-label">Remaining</div><div class="batt-cell-value" id="battAh">&mdash;</div></div>
+        <div class="batt-cellbox"><div class="batt-cell-label">Rated capacity</div><div class="batt-cell-value" id="battTotalAh">&mdash;</div></div>
+        <div class="batt-cellbox"><div class="batt-cell-label">Stored energy</div><div class="batt-cell-value" id="battWh">&mdash;</div></div>
+        <div class="batt-cellbox"><div class="batt-cell-label">Cell spread</div><div class="batt-cell-value" id="battDelta">&mdash;</div></div>
+        <div class="batt-cellbox"><div class="batt-cell-label">Average cell</div><div class="batt-cell-value" id="battAvgCell">&mdash;</div></div>
+      </div>
+
+      <div class="tx-title" style="margin:26px 0 12px;">Cell voltages</div>
+      <div class="batt-grid">
+        <div class="batt-cellbox">
+          <div class="batt-cell-label">Cell 1</div>
+          <div class="batt-cell-value" id="cellVolt1">&mdash;</div>
+          <div style="height:5px; background:var(--bg); border-radius:3px; margin-top:8px; overflow:hidden;">
+            <div id="cellBar1" style="height:100%; width:0%; background:var(--green); border-radius:3px; transition:width .6s ease, background .4s ease;"></div>
+          </div>
+        </div>
+        <div class="batt-cellbox">
+          <div class="batt-cell-label">Cell 2</div>
+          <div class="batt-cell-value" id="cellVolt2">&mdash;</div>
+          <div style="height:5px; background:var(--bg); border-radius:3px; margin-top:8px; overflow:hidden;">
+            <div id="cellBar2" style="height:100%; width:0%; background:var(--green); border-radius:3px; transition:width .6s ease, background .4s ease;"></div>
+          </div>
+        </div>
+        <div class="batt-cellbox">
+          <div class="batt-cell-label">Cell 3</div>
+          <div class="batt-cell-value" id="cellVolt3">&mdash;</div>
+          <div style="height:5px; background:var(--bg); border-radius:3px; margin-top:8px; overflow:hidden;">
+            <div id="cellBar3" style="height:100%; width:0%; background:var(--green); border-radius:3px; transition:width .6s ease, background .4s ease;"></div>
+          </div>
+        </div>
+        <div class="batt-cellbox">
+          <div class="batt-cell-label">Cell 4</div>
+          <div class="batt-cell-value" id="cellVolt4">&mdash;</div>
+          <div style="height:5px; background:var(--bg); border-radius:3px; margin-top:8px; overflow:hidden;">
+            <div id="cellBar4" style="height:100%; width:0%; background:var(--green); border-radius:3px; transition:width .6s ease, background .4s ease;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="batt-chips">
+        <span class="batt-chip" id="battLink">Bluetooth link &mdash;</span>
+        <span class="batt-chip" id="battBalance">Cells &mdash;</span>
+      </div>
+
+      <div class="batt-foot" id="battUpdated">Connecting&hellip;</div>
+      <div class="batt-foot">
+      </div>
+    </div>
+  </div>
+    </div><!-- /workspace-inner -->
+  </div><!-- /workspace -->
+</div>
+
+<!-- ============ MODAL: EDIT USER ============ -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Edit cardholder</div>
+    <input type="hidden" id="editUid">
+    <label for="editName">Full name</label>
+    <input type="text" id="editName">
+    <label for="editPhone">Phone number</label>
+    <input type="text" id="editPhone">
+    <label>Status</label>
+    <div class="status-toggle">
+      <button type="button" class="status-toggle-btn choice-active" id="editStatusActiveBtn" onclick="setEditStatus('active')">Active</button>
+      <button type="button" class="status-toggle-btn choice-blocked" id="editStatusBlockedBtn" onclick="setEditStatus('blocked')">Blocked</button>
+    </div>
+    <div class="status-msg" id="editStatusMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditUser()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DELETE CONFIRM ============ -->
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Delete this card?</div>
+    <p>This will permanently remove <span class="mono" id="deleteTargetUid">—</span> and its full transaction history from Firebase. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-reject" onclick="confirmDeleteUser()">Delete permanently</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: EDIT PHYSICAL BRANCH ============ -->
+<div class="modal-overlay" id="editBranchOverlay">
+  <div class="modal-box branch-modal-box" role="dialog" aria-modal="true" aria-labelledby="editBranchTitle">
+    <div class="tx-title" id="editBranchTitle">Edit branch location</div>
+    <input type="hidden" id="editBranchUid">
+    <div class="branch-hint">The permanent Branch UID remains unchanged. This only updates the location name.</div>
+    <label>Permanent Branch UID</label>
+    <div class="branch-identifier branch-id-preview" id="editBranchUidDisplay"></div>
+    <label for="editBranchName">Official location name</label>
+    <input id="editBranchName" maxlength="100" autocomplete="off">
+    <div id="editBranchStatusMsg" class="status-msg" role="status" aria-live="polite"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" type="button" onclick="closeEditBranchModal()">Cancel</button>
+      <button class="btn-primary" type="button" id="saveBranchBtn" onclick="saveBranchName()">Save name</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DELETE PHYSICAL BRANCH ============ -->
+<div class="modal-overlay" id="deleteBranchOverlay">
+  <div class="modal-box branch-modal-box" role="dialog" aria-modal="true" aria-labelledby="deleteBranchTitle">
+    <div class="tx-title" id="deleteBranchTitle">Delete physical branch</div>
+    <input type="hidden" id="deleteBranchUid">
+    <div class="branch-hint" id="deleteBranchName"></div>
+    <label>Branch UID to delete</label>
+    <div class="branch-identifier branch-id-preview" id="deleteBranchUidDisplay"></div>
+    <div class="branch-danger-note">
+      This deletes the <strong>branch and any linked UNUSED reloader database records</strong> together. Operators with wallet funds, histories, charging records or device references cannot be deleted this way. Firebase Authentication users must be deleted separately by an administrator.
+      Keep locations with historical sales for accurate reports.
+    </div>
+    <div id="deleteBranchStatusMsg" class="status-msg show info" role="status" aria-live="polite">Checking linked accounts and transaction records…</div>
+    <label for="deleteBranchConfirmInput">Type the exact Branch UID to confirm</label>
+    <input id="deleteBranchConfirmInput" class="mono" autocomplete="off" spellcheck="false" placeholder="Paste the Branch UID" oninput="branchRefreshDeleteButton()">
+    <div class="modal-actions">
+      <button class="btn-secondary" type="button" onclick="closeDeleteBranchModal()">Cancel</button>
+      <button class="btn-reject" type="button" id="confirmDeleteBranchBtn" onclick="confirmDeleteBranch()" disabled>Delete unused branch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: EDIT RELOADER ============ -->
+<div class="modal-overlay" id="editReloaderOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Edit reloader</div>
+    <input type="hidden" id="editReloaderUid">
+    <label for="editReloaderName">Booth / operator name</label>
+    <input type="text" id="editReloaderName">
+    <label>Sign-in email</label>
+    <input type="text" id="editReloaderEmail" class="mono" disabled style="opacity:0.6;">
+    <label for="editReloaderBranch">Assigned physical branch</label>
+    <select id="editReloaderBranch"></select>
+    <div class="branch-hint">Changing this assignment does not rewrite historical sales. Only transactions with recorded branchUid can be definitively attributed.</div>
+    <div style="color:var(--text-muted); font-size:11px; margin-top:6px; line-height:1.5;">
+      The sign-in email can only be changed from the Firebase Authentication console.
+    </div>
+    <label>Status</label>
+    <div class="status-toggle">
+      <button type="button" class="status-toggle-btn choice-active" id="editReloaderActiveBtn" onclick="setReloaderStatus('active')">Active</button>
+      <button type="button" class="status-toggle-btn choice-blocked" id="editReloaderBlockedBtn" onclick="setReloaderStatus('blocked')">Blocked</button>
+    </div>
+    <div style="color:var(--text-muted); font-size:11px; margin-top:8px; line-height:1.5;">
+      Blocking signs the booth out of its terminal on the next sync and blocks new sign-ins.
+    </div>
+    <div class="status-msg" id="editReloaderStatusMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEditReloaderModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditReloader()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: FUND RELOADER WALLET ============ -->
+<div class="modal-overlay" id="fundReloaderOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Fund wallet</div>
+    <p>Collect the cash float from <span id="fundReloaderName">—</span> first, then credit the wallet here.</p>
+    <input type="hidden" id="fundReloaderUid">
+    <label>Current wallet</label>
+    <div class="balance-value" style="font-size:26px;">₱<span id="fundCurrentBalance">0.00</span></div>
+    <label for="fundAmount">Amount to add (₱)</label>
+    <input type="number" id="fundAmount" placeholder="0" step="1">
+    <div class="quick-amounts">
+      <button onclick="setFundAmount(200)">+₱200</button>
+      <button onclick="setFundAmount(500)">+₱500</button>
+      <button onclick="setFundAmount(1000)">+₱1000</button>
+      <button onclick="setFundAmount(2000)">+₱2000</button>
+    </div>
+    <div style="color:var(--text-muted); font-size:11px; margin-top:10px; line-height:1.5;">
+      Enter a negative amount to correct an over-credit. The wallet cannot go below ₱0.
+    </div>
+    <div class="status-msg" id="fundStatusMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeFundModal()">Cancel</button>
+      <button class="btn-primary" id="fundConfirmBtn" onclick="confirmFundReloader()">Credit wallet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: DELETE RELOADER ============ -->
+<div class="modal-overlay" id="deleteReloaderOverlay">
+  <div class="modal-box">
+    <div class="tx-title">Revoke this reloader?</div>
+    <p>This permanently removes <span class="mono" id="deleteReloaderUid">—</span> and its sales_history. The permanent branch ID remains registered, but historical sales under this reloader will be lost. Export/back up records before proceeding.</p>
+    <p style="margin-top:10px;">Unsettled wallet float: <span class="mono" id="deleteReloaderBalance">₱0.00</span> — settle the cash before revoking.</p>
+    <p style="margin-top:10px;">The Firebase Auth login still exists afterwards. Delete it under Authentication → Users to revoke its sign-in credentials.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeDeleteReloaderModal()">Cancel</button>
+      <button class="btn-reject" onclick="confirmDeleteReloader()">Revoke permanently</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat build — simplest for a student project) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>
